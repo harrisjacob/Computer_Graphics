@@ -1,0 +1,45 @@
+Assignment: Geometric Triangle Heart Pattern (Assignment 1)
+Name: Jacob Harris
+Due: 2/18/21
+
+
+Verticies:
+(-0.75, 0.15)
+(-0.25, 0.65)
+( 0.25, 0.15)		Blue Triangle
+(-0.75, 0.15)
+(-0.25, 0.15)
+(-0.25, -0.4)		Pink Triangle
+(-0.25, -0.4)
+(-0.25, 0.15)
+( 0.0 , -0.125)		Red Triangle
+(-0.25, -0.4)
+( 0.0 , -0.125)
+( 0.25, -0.4)		Green Triangle
+(-0.25, -0.4)
+( 0.25, -0.4)
+( 0.0 , -0.65)		Brown Triangle
+( 0.25, -0.4)
+(-0.25, 0.15)
+( 0.75, 0.15)		Orange Triangle
+( 0.25, 0.15)
+( 0.75, 0.15)
+( 0.5 , 0.4 )		Light Blue Triangle
+( 0.0 , 0.4 )
+( 0.5 , 0.4 )
+( 0.25, 0.15)		Yellow Triangle
+( 0.0 , 0.4 )
+( 0.5 , 0.4 )
+( 0.25, 0.65)		Purple Triangle
+
+
+Colors:
+Blue	 	->	#009efd	->		(0.0, 0.62, 0.99)
+Pink		->	#ffa1bf ->		(1.0, 0.63, 0.74)
+Red			->	#ff2b06	->		(1.0, 0.16, 0.02) 
+Green	 	->	#00fa30	->		(0.0, 0.98, 0.19)
+Brown		->	#a1591d ->		(0.63, 0.35, 0.11) 
+Orange	 	->	#ffa01c	->		(1.0, 0.62, 0.11)
+Light Blue 	->	#00fcff ->		(0.0, 0.99, 1.0)
+Yellow	 	->	#fefd32	->		(1.0, 0.99, 0.2)
+Purple	 	->	#ab26d7	->		(0.67, 0.15, 0.84)
