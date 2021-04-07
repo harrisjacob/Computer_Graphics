@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>2D Simulated Clock</title>
+
+<!--- Shaders are included in the HTML file --->
+<script id="vertex-shader" type="x-shader/x-vertex">
+attribute vec4 a_vPosition;
+uniform mat4 u_ctMatrix;
+
+void
+main()
+{
+    gl_Position = u_ctMatrix*a_vPosition;
+
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+uniform vec3 u_Color;
+
+void
+main()
+{
+    gl_FragColor = vec4(u_Color, 1.0);
+}
+</script>
+
+<!--- Loading commonly used WebGL utility functions --->
+<!--- The <script> tag points to JavaScript files which will be loaded by the browser --->
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<!--- Loading the code to read, compile, and link the shaders, same for every application --->
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<!--- Loading the matrix-vector package --->
+<script type="text/javascript" src="../Common/MV.js"></script>
+<!--- Loading the application javascript file --->
+<script type="text/javascript" src="simClock.js"></script>
+</head>
+<body>
+<!--- Create a drawing surface --->
+<!--- The canvas id can be referred to in the application file gasket1.js --->
+<canvas id="gl-canvas" width="512" height="512">
+<!--- The following message is displayed if the browser doesn't support HTML5 --->
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+</body>
+</html>
