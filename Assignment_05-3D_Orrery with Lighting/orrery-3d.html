@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>Orrery 3D</title>
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute vec3 a_position;
+uniform mat4 u_mvpMatrix;
+
+void
+main()
+{
+    gl_Position = u_mvpMatrix * vec4(a_position, 1.0);
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+uniform vec3 u_color;
+
+void
+main()
+{
+    gl_FragColor = vec4( u_color, 1.0 );
+}
+</script>
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="../Common/trackball.js"></script>
+<script type="text/javascript" src="orrery-3d.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="1024" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<br><br>
+<form>
+	<button type="button" id="inc_button">Inc DPF</button>
+	<button type="button" id="dec_button">Dec DPF</button>
+	<br />
+    <input type="radio" name="toggleOrbit" id="orbon" checked>Orbit On
+    <input type="radio" name="toggleOrbit" id="orboff">Orbit Off
+    <br />
+    <input type="radio" name="toggleDay" id="dayon" checked>Day On
+    <input type="radio" name="toggleDay" id="dayoff">Day Off
+    <br />
+    <input type="radio" name="toggleAnim" id="animon" checked>Animation On
+    <input type="radio" name="toggleAnim" id="animoff">Animation Off
+
+</form>
+
+<!--- The statistics are printed here. --->
+<p id="printDay"></p>
+
+</body>
+</html>
