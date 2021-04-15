@@ -2,27 +2,82 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
-<title>Orrery 3D</title>
+<title>Orrery 3D with Lighting</title>
 <script id="vertex-shader" type="x-shader/x-vertex">
 
-attribute vec3 a_position;
+attribute vec3 a_vPosition;
+attribute vec4 a_vNormal;
+varying vec4 v_fColor;
+uniform vec4 u_ambientLight;
+uniform vec4 u_diffuseLight;
+uniform vec4 u_specularLight;
+
+uniform vec4 u_lightPosition;
+uniform float u_shininess;
+
+uniform mat3 u_nMatrix;
+
+uniform mat4 u_modelViewMatrix;
 uniform mat4 u_mvpMatrix;
 
 void
 main()
 {
-    gl_Position = u_mvpMatrix * vec4(a_position, 1.0);
+    //Draw vertex
+    gl_Position = u_mvpMatrix * vec4(a_vPosition, 1.0);
+
+    //Get modelViewMatrix for transforming vertex position to eye space
+    vec3 pos = (u_modelViewMatrix * vec4(a_vPosition, 1.0)).xyz;
+    
+    //Convert the light source to eye space
+    vec3 light;
+    vec3 lightPositionES = (u_modelViewMatrix * u_lightPosition).xyz;
+
+    //Check if the light is directional (0) or point source (1)
+    if(u_lightPosition.w == 0.0){
+        light = normalize( lightPositionES );
+    }else{
+        light = normalize( lightPositionES - pos);
+    }
+
+    //Calculate light vector (both in eye space)
+    vec3 L = normalize(light - pos);
+
+    //Calculate eye vector (eye is at origin so the vector needs to be inverted)
+    vec3 E  = -normalize(pos);
+    
+    vec3 N = normalize(u_nMatrix * a_vNormal.xyz);
+    
+
+    vec3 R = normalize(-reflect(L,N));
+
+    vec4 ambient = u_ambientLight;
+    float Kd = max( dot(L, N), 0.0);
+    vec4 diffuse = Kd * u_diffuseLight;
+    float Ks = pow( max(dot(E,R), 0.0), u_shininess);
+    vec4 specular = Ks * u_specularLight;
+
+    if(dot(L,N) < 0.0){
+        specular = vec4(0.0,0.0,0.0,1.0);
+    }
+
+    
+
+    v_fColor = ambient + diffuse + specular;
+    v_fColor.a = 1.0;
+
 }
 </script>
 
 <script id="fragment-shader" type="x-shader/x-fragment">
 precision mediump float;
+varying vec4 v_fColor;
 uniform vec3 u_color;
 
 void
 main()
 {
-    gl_FragColor = vec4( u_color, 1.0 );
+    gl_FragColor = vec4( u_color, 1.0 )*v_fColor;
 }
 </script>
 

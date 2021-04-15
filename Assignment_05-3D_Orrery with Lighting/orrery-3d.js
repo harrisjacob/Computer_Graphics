@@ -5,17 +5,17 @@ var canvas;
 
 var printDay;
 
-var mvpMatrix;
 
 // non-common modelview projection matrix
 var nonCommonMVPMatrix;
 
 // common modelview projection matrix
 var commonMVPMatrix;
+var commonNoProjMatrix;
 
-var a_positionLoc;
+var a_vPositionLoc;
 var u_colorLoc;
-var u_mvpMatrixLoc;
+
 
 // Last time that this function was called
 var g_last = Date.now();
@@ -58,6 +58,7 @@ var circleVertexPositionData = []; // for orbit
 var sphereVertexPositionData = []; // for planet
 var sphereVertexIndexData = []; // for planet
 
+var nBuffer;
 var circleVertexPositionBuffer;
 var sphereVertexPositionBuffer;
 var sphereVertexIndexBuffer;
@@ -68,6 +69,27 @@ var m_mousex = 1;
 var m_mousey = 1;
 var m_curquat;
 var m_inc;
+
+//Lighting
+var normalsArray = [];
+
+// directional light
+var lightPosition = vec4(1.0, 1.0, 1.0, 0.0 );
+
+var ambientLight = vec4(0.2, 0.2, 0.2, 1.0 );
+var diffuseLight = vec4( 1.0, 1.0, 1.0, 1.0 );
+var specularLight = vec4( 1.0, 1.0, 1.0, 1.0 );
+
+
+var materialShininess = 20.0;
+
+
+var nMatrix;
+var u_nMatrixLoc;
+var a_vNormalLoc;
+var modelViewMatrix;
+var u_modelViewMatrixLoc;
+var u_mvpMatrixLoc, mvpMatrix;
 
 
 window.onload = function init()
@@ -101,6 +123,7 @@ window.onload = function init()
     var program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
 
+
     // Load the data into the GPU
 
     circleVertexPositionBuffer = gl.createBuffer();
@@ -115,13 +138,36 @@ window.onload = function init()
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereVertexIndexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(sphereVertexIndexData), gl.STATIC_DRAW);
 
+    nBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW );
+
+
     // Associate out shader variables with our data buffer
 
-    a_positionLoc = gl.getAttribLocation( program, "a_position" );
+    a_vPositionLoc = gl.getAttribLocation( program, "a_vPosition" );
+    a_vNormalLoc = gl.getAttribLocation( program, "a_vNormal" );
 
+    u_modelViewMatrixLoc = gl.getUniformLocation(program, "u_modelViewMatrix");
+    u_mvpMatrixLoc = gl.getUniformLocation(program, "u_mvpMatrix");
     u_colorLoc = gl.getUniformLocation( program, "u_color" );
+    u_nMatrixLoc = gl.getUniformLocation( program, "u_nMatrix" );
 
-    u_mvpMatrixLoc = gl.getUniformLocation( program, "u_mvpMatrix" );
+
+
+
+
+    gl.uniform4fv( gl.getUniformLocation(program,
+       "u_ambientLight"),flatten(ambientLight) );
+    gl.uniform4fv( gl.getUniformLocation(program,
+       "u_diffuseLight"),flatten(diffuseLight) );
+    gl.uniform4fv( gl.getUniformLocation(program,
+       "u_specularLight"),flatten(specularLight) );
+    gl.uniform4fv( gl.getUniformLocation(program,
+       "u_lightPosition"),flatten(lightPosition) );
+    gl.uniform1f( gl.getUniformLocation(program,
+       "u_shininess"),materialShininess );
+
 
 
     //Change days per frame
@@ -174,6 +220,8 @@ function setupCircle() {
 function setupSphere() {
     var latitudeBands = 50;
     var longitudeBands = 50;
+    // var latitudeBands = 2;
+    // var longitudeBands = 2;
     var radius = 1.0;
 
     // compute sampled vertex positions
@@ -191,28 +239,37 @@ function setupSphere() {
             var y = cosTheta;
             var z = sinPhi * sinTheta;
 
+            normalsArray.push(radius*x, radius*y, radius*z, 0.0);
+
+
+
             sphereVertexPositionData.push(radius * x);
             sphereVertexPositionData.push(radius * y);
             sphereVertexPositionData.push(radius * z);
+
+            //console.log("Index: "+((latNumber * (longitudeBands + 1)) + longNumber) + " ("+(radius * x)+","+(radius * y)+","+(radius * z)+")");
         }
     }
 
-    // create the actual mesh, each quad is represented by two triangles
     for (var latNumber=0; latNumber < latitudeBands; latNumber++) {
         for (var longNumber=0; longNumber < longitudeBands; longNumber++) {
             var first = (latNumber * (longitudeBands + 1)) + longNumber;
             var second = first + longitudeBands + 1;
-            // the three vertices of the 1st triangle
+
             sphereVertexIndexData.push(first);
             sphereVertexIndexData.push(second);
             sphereVertexIndexData.push(first + 1);
-            // the three vertices of the 2nd triangle
+
             sphereVertexIndexData.push(second);
             sphereVertexIndexData.push(second + 1);
             sphereVertexIndexData.push(first + 1);
+
+
         }
     }
+
 }
+
 
 function drawCircle(color) {
     // set uniforms
@@ -220,10 +277,11 @@ function drawCircle(color) {
     mvpMatrix = mult(commonMVPMatrix, nonCommonMVPMatrix);
     gl.uniformMatrix4fv(u_mvpMatrixLoc, false, flatten(mvpMatrix) );
 
-    gl.enableVertexAttribArray( a_positionLoc );
+    gl.enableVertexAttribArray( a_vPositionLoc );
     gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexPositionBuffer);
-    gl.vertexAttribPointer( a_positionLoc, 3, gl.FLOAT, false, 0, 0 );
+    gl.vertexAttribPointer( a_vPositionLoc, 3, gl.FLOAT, false, 0, 0 );
     gl.drawArrays( gl.LINE_LOOP, 0, circleVertexPositionData.length );
+
 }
 
 function drawSphere(color) {
@@ -232,11 +290,26 @@ function drawSphere(color) {
     mvpMatrix = mult(commonMVPMatrix, nonCommonMVPMatrix);
     gl.uniformMatrix4fv(u_mvpMatrixLoc, false, flatten(mvpMatrix) );
 
-    gl.enableVertexAttribArray( a_positionLoc );
+    var modelViewMatrix = mult(commonNoProjMatrix, nonCommonMVPMatrix);
+
+    nMatrix = normalMatrix(modelViewMatrix, true);
+    gl.uniformMatrix3fv(u_nMatrixLoc, false, flatten(nMatrix) );
+
+
+    gl.uniformMatrix4fv(u_modelViewMatrixLoc, false, flatten(modelViewMatrix));
+
+    gl.enableVertexAttribArray( a_vNormalLoc );
+    gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
+    gl.vertexAttribPointer( a_vNormalLoc, 4, gl.FLOAT, false, 0, 0 );
+
+
+    gl.enableVertexAttribArray( a_vPositionLoc );
     gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexPositionBuffer);
-    gl.vertexAttribPointer(a_positionLoc, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(a_vPositionLoc, 3, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereVertexIndexBuffer);
     gl.drawElements(gl.TRIANGLES, sphereVertexIndexData.length, gl.UNSIGNED_SHORT, 0);
+    
+
 }
 
 function drawOrbits() {
@@ -279,8 +352,6 @@ function drawBodies() {
     nonCommonMVPMatrix = mult(rotateY(angleOffset/pVenus),
                               mult(translate(orVenus, 0.0, 0.0), scalem(size, size, size)));
     drawSphere( vec3( 0.5, 1.0, 0.5 ));
-
-
 
     // Earth
     size = rEarth * rPlanetMult;
@@ -325,7 +396,7 @@ function mouseMotion(x,  y)
 
 function drawAll()
 {
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
     // all planets and orbits will take the following transformation
 
@@ -345,6 +416,8 @@ function drawAll()
                                   vec3(0.0, 0.0, 0.0),
                                   vec3(0.0, 1.0, 0.0)),
                            commonMVPMatrix);
+
+    commonNoProjMatrix = commonMVPMatrix;
 
     // projection matrix
     commonMVPMatrix = mult(perspective(30, 2.0, 0.1, 1000.0),
