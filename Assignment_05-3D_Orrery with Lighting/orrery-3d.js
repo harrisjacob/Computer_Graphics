@@ -77,9 +77,8 @@ var normalsArray = [];
 var lightPosition = vec4(1.0, 1.0, 1.0, 0.0 );
 
 var ambientLight = vec4(0.2, 0.2, 0.2, 1.0 );
-var diffuseLight = vec4( 1.0, 1.0, 1.0, 1.0 );
-var specularLight = vec4( 1.0, 1.0, 1.0, 1.0 );
-
+var colorLight = vec4( 1.0, 1.0, 1.0, 1.0 );
+var u_colorLightLoc;
 
 var materialShininess = 20.0;
 
@@ -152,7 +151,7 @@ window.onload = function init()
     u_mvpMatrixLoc = gl.getUniformLocation(program, "u_mvpMatrix");
     u_colorLoc = gl.getUniformLocation( program, "u_color" );
     u_nMatrixLoc = gl.getUniformLocation( program, "u_nMatrix" );
-
+    u_colorLightLoc = gl.getUniformLocation( program, "u_colorLight");
 
 
 
@@ -160,9 +159,7 @@ window.onload = function init()
     gl.uniform4fv( gl.getUniformLocation(program,
        "u_ambientLight"),flatten(ambientLight) );
     gl.uniform4fv( gl.getUniformLocation(program,
-       "u_diffuseLight"),flatten(diffuseLight) );
-    gl.uniform4fv( gl.getUniformLocation(program,
-       "u_specularLight"),flatten(specularLight) );
+       "u_colorLight"),flatten(colorLight) );
     gl.uniform4fv( gl.getUniformLocation(program,
        "u_lightPosition"),flatten(lightPosition) );
     gl.uniform1f( gl.getUniformLocation(program,
@@ -178,6 +175,23 @@ window.onload = function init()
 
     document.getElementById("dec_button").onclick = function () {
         daysPerFrame /=2;
+    };
+
+    document.getElementById("red-slider").onchange = function(event) {
+        colorLight[0] = event.target.value;
+        gl.uniform4fv( u_colorLightLoc ,flatten(colorLight) );
+    };
+
+
+    document.getElementById("green-slider").onchange = function(event) {
+        colorLight[1] = event.target.value;
+        gl.uniform4fv( u_colorLightLoc ,flatten(colorLight) );
+    };
+
+
+    document.getElementById("blue-slider").onchange = function(event) {
+        colorLight[2] = event.target.value;
+        gl.uniform4fv( u_colorLightLoc ,flatten(colorLight) );
     };
 
     // for trackball
@@ -220,8 +234,6 @@ function setupCircle() {
 function setupSphere() {
     var latitudeBands = 50;
     var longitudeBands = 50;
-    // var latitudeBands = 2;
-    // var longitudeBands = 2;
     var radius = 1.0;
 
     // compute sampled vertex positions
@@ -247,7 +259,6 @@ function setupSphere() {
             sphereVertexPositionData.push(radius * y);
             sphereVertexPositionData.push(radius * z);
 
-            //console.log("Index: "+((latNumber * (longitudeBands + 1)) + longNumber) + " ("+(radius * x)+","+(radius * y)+","+(radius * z)+")");
         }
     }
 
