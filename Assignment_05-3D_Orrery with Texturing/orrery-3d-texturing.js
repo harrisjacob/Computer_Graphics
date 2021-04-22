@@ -46,7 +46,6 @@ var pEarth = 365;
 var pMoon = 27;
 
 var EarthRef;
-var EarthSpin;
 
 // time
 var currentDay;
@@ -116,7 +115,7 @@ window.onload = function init()
     //  Configure WebGL
     //
     gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.clearColor( 0.85, 0.85, 0.85, 1.0 );
+    gl.clearColor( 0.2, 0.2, 0.2, 1.0 );
 
     gl.enable(gl.DEPTH_TEST);
 
@@ -410,20 +409,20 @@ function drawSphere(color, texture) {
 }
 
 function drawOrbits() {
-    var gray = vec3( 0.2, 0.2, 0.2 );
-
+    //var gray = vec3( 0.2, 0.2, 0.2 );
+    var white = vec3( 1.0, 1.0, 1.0);
     nonCommonMVPMatrix = scalem(orMercury, orMercury, orMercury);
-    drawCircle( gray );     //Mercury
+    drawCircle( white );     //Mercury
 
 
     nonCommonMVPMatrix = scalem(orVenus, orVenus, orVenus);
-    drawCircle( gray );    // Venus
+    drawCircle( white );    // Venus
 
     nonCommonMVPMatrix = scalem(orEarth, orEarth, orEarth);
-    drawCircle( gray );
+    drawCircle( white );
 
     nonCommonMVPMatrix = mult(EarthRef, scalem(orMoon*50, orMoon*50, orMoon*50));
-    drawCircle( gray );
+    drawCircle( white );
 
 
 }
@@ -453,7 +452,10 @@ function drawBodies() {
     // Earth
     size = rEarth * rPlanetMult;
 
-    nonCommonMVPMatrix =  mult(EarthSpin, scalem(size, size, size));
+    var hour = (currentDay - Math.floor(currentDay))*360
+
+    nonCommonMVPMatrix =  mult(EarthRef,
+                          mult(rotateY(hour), scalem(size, size, size)));
     drawSphere( vec3( 0.5, 0.5, 1.0 ), earthTexture);
 
 
@@ -521,10 +523,7 @@ gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
                            commonMVPMatrix);
 
     var angleOffset = currentDay * 360.0;  // days * degrees
-    var hour = (currentDay - Math.floor(currentDay))*360
-    EarthSpin = mult(rotateY(angleOffset/pEarth),
-                        mult(translate(orEarth, 0.0, 0.0), 
-                        mult(rotateY(hour),rotateZ(23.5))));
+    
 
     EarthRef = mult(rotateY(angleOffset/pEarth),
                         mult(translate(orEarth, 0.0, 0.0), rotateZ(23.5)));
