@@ -91,6 +91,12 @@ var u_modelViewMatrixLoc;
 var u_mvpMatrixLoc, mvpMatrix;
 
 
+//Texturing
+var textureCoordsArray = [];
+var sunTexture, mercuryTexture, venusTexture, earthTexture, moonTexture;
+
+
+
 window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
@@ -140,6 +146,13 @@ window.onload = function init()
     nBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW );
+
+
+    //Send sphere vertex texture coordiante data into the GPU
+    var textBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, textBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordsArray), gl.STATIC_DRAW);
+
 
 
     // Associate out shader variables with our data buffer
@@ -219,10 +232,44 @@ window.onload = function init()
     });
 
 
+    //Load jpg images
+    var image;
+    image = document.getElementById("sun-texture");
+    configureTexture( image, sunTexture);
+
+    image = document.getElementById("mercury-texture");
+    configureTexture( image, mercuryTexture);
+
+    image = document.getElementById("venus-texture");
+    configureTexture( image, venusTexture);
+
+    image = document.getElementById("earth-texture");
+    configureTexture( image, earthTexture);
+
+    image = document.getElementById("moon-texture");
+    configureTexture( image, moonTexture);
 
     render();
 
 };
+
+function configureTexture( image, texture) {
+    texture = gl.createTexture();
+    gl.bindTexture( gl.TEXTURE_2D, texture );
+
+    //Flips the source data along its vertical axis when texImage2D or texSubImage2D
+    //are called when param is true. The initial value for param is false.
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);//This will flip the Y
+
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image );
+    gl.generateMipmap( gl.TEXTURE_2D );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+}
+
+
+
+
 
 function setupCircle() {
     var increment = 0.1;
@@ -247,12 +294,14 @@ function setupSphere() {
             var sinPhi = Math.sin(phi);
             var cosPhi = Math.cos(phi);
 
+            var u = 1 - (longNumber/longitudeBands);
+            var v = 1 - (latNumber/latitudeBands);
             var x = cosPhi * sinTheta;
             var y = cosTheta;
             var z = sinPhi * sinTheta;
 
             normalsArray.push(radius*x, radius*y, radius*z, 0.0);
-
+            textureCoordsArray.push(u,v);
 
 
             sphereVertexPositionData.push(radius * x);
