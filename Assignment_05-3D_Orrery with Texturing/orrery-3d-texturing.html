@@ -19,6 +19,10 @@ uniform mat3 u_nMatrix;
 uniform mat4 u_modelViewMatrix;
 uniform mat4 u_mvpMatrix;
 
+varying vec2 v_fTexCoord;
+attribute vec2 a_vTexCoord;
+
+
 void
 main()
 {
@@ -65,6 +69,9 @@ main()
     v_fColor = ambient + diffuse + specular;
     v_fColor.a = 1.0;
 
+    //Pass texture coordinates to fragment shader
+    v_fTexCoord = a_vTexCoord;
+
 }
 </script>
 
@@ -73,10 +80,17 @@ precision mediump float;
 varying vec4 v_fColor;
 uniform vec3 u_color;
 
+uniform sampler2D u_texSampler;
+varying vec2 v_fTexCoord;
+
+
 void
 main()
 {
-    gl_FragColor = vec4( u_color, 1.0 )*v_fColor;
+    //gl_FragColor = vec4( u_color, 1.0 )*v_fColor;
+    //gl_FragColor = texture2D(u_texSampler,v_fTexCoord)*vec4( u_color, 1.0 )*v_fColor;
+    gl_FragColor = texture2D(u_texSampler,v_fTexCoord)*v_fColor;
+
 }
 </script>
 

@@ -62,6 +62,7 @@ var nBuffer;
 var circleVertexPositionBuffer;
 var sphereVertexPositionBuffer;
 var sphereVertexIndexBuffer;
+var textureVertexIndexBuffer;
 
 //trackball
 var trackballMove = false;
@@ -92,7 +93,12 @@ var u_mvpMatrixLoc, mvpMatrix;
 
 
 //Texturing
+var tBuffer;
+var a_vTexCoordLoc;
+var u_texSampleLoc;
 var textureCoordsArray = [];
+var textureCoordsInit = [];
+var textureCoordsPositionData = [];
 var sunTexture, mercuryTexture, venusTexture, earthTexture, moonTexture;
 
 
@@ -149,9 +155,15 @@ window.onload = function init()
 
 
     //Send sphere vertex texture coordiante data into the GPU
-    var textBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, textBuffer);
+    tBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordsArray), gl.STATIC_DRAW);
+
+
+    //var a_vTexCoordLoc = gl.getAttribLocation( program, "a_vTexCoord" );
+    // gl.vertexAttribPointer( a_vTexCoordLoc, 2, gl.FLOAT, false, 0, 0 );
+    // gl.enableVertexAttribArray( a_vTexCoordLoc );
+
 
 
 
@@ -159,12 +171,19 @@ window.onload = function init()
 
     a_vPositionLoc = gl.getAttribLocation( program, "a_vPosition" );
     a_vNormalLoc = gl.getAttribLocation( program, "a_vNormal" );
+    a_vTexCoordLoc = gl.getAttribLocation( program, "a_vTexCoord" );
+
 
     u_modelViewMatrixLoc = gl.getUniformLocation(program, "u_modelViewMatrix");
     u_mvpMatrixLoc = gl.getUniformLocation(program, "u_mvpMatrix");
     u_colorLoc = gl.getUniformLocation( program, "u_color" );
     u_nMatrixLoc = gl.getUniformLocation( program, "u_nMatrix" );
     u_colorLightLoc = gl.getUniformLocation( program, "u_colorLight");
+    u_texSampleLoc = gl.getUniformLocation(program, "u_texSampler");
+
+
+    //Bind value 0 (this should not change)
+    gl.uniform1i(u_texSampleLoc, 0);
 
 
 
@@ -235,26 +254,26 @@ window.onload = function init()
     //Load jpg images
     var image;
     image = document.getElementById("sun-texture");
-    configureTexture( image, sunTexture);
+    sunTexture = configureTexture(image);
 
     image = document.getElementById("mercury-texture");
-    configureTexture( image, mercuryTexture);
+    mercuryTexture = configureTexture(image);
 
     image = document.getElementById("venus-texture");
-    configureTexture( image, venusTexture);
+    venusTexture = configureTexture(image);
 
     image = document.getElementById("earth-texture");
-    configureTexture( image, earthTexture);
+    earthTexture = configureTexture(image);
 
     image = document.getElementById("moon-texture");
-    configureTexture( image, moonTexture);
+    moonTexture = configureTexture(image);
 
     render();
 
 };
 
-function configureTexture( image, texture) {
-    texture = gl.createTexture();
+function configureTexture( image ) {
+    var texture = gl.createTexture();
     gl.bindTexture( gl.TEXTURE_2D, texture );
 
     //Flips the source data along its vertical axis when texImage2D or texSubImage2D
@@ -265,6 +284,8 @@ function configureTexture( image, texture) {
     gl.generateMipmap( gl.TEXTURE_2D );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+
+    return texture;
 }
 
 
@@ -302,6 +323,7 @@ function setupSphere() {
 
             normalsArray.push(radius*x, radius*y, radius*z, 0.0);
             textureCoordsArray.push(u,v);
+        
 
 
             sphereVertexPositionData.push(radius * x);
@@ -317,12 +339,18 @@ function setupSphere() {
             var second = first + longitudeBands + 1;
 
             sphereVertexIndexData.push(first);
+            // textureCoordsArray.push(textureCoordsInit[first]);
             sphereVertexIndexData.push(second);
+            // textureCoordsArray.push(textureCoordsInit[second]);
             sphereVertexIndexData.push(first + 1);
+            // textureCoordsArray.push(textureCoordsInit[first+1]);
 
             sphereVertexIndexData.push(second);
+            // textureCoordsArray.push(textureCoordsInit[second]);
             sphereVertexIndexData.push(second + 1);
+            // textureCoordsArray.push(textureCoordsInit[second+1]);
             sphereVertexIndexData.push(first + 1);
+            // textureCoordsArray.push(textureCoordsInit[first+1]);
 
 
         }
@@ -344,7 +372,8 @@ function drawCircle(color) {
 
 }
 
-function drawSphere(color) {
+function drawSphere(color, texture) {
+
     // set uniforms
     gl.uniform3fv( u_colorLoc, color );
     mvpMatrix = mult(commonMVPMatrix, nonCommonMVPMatrix);
@@ -363,12 +392,31 @@ function drawSphere(color) {
     gl.vertexAttribPointer( a_vNormalLoc, 4, gl.FLOAT, false, 0, 0 );
 
 
+
+    //Activate texture
+    gl.activeTexture(gl.TEXTURE0)               //Set this as the active texture
+    gl.bindTexture( gl.TEXTURE_2D, texture );   //Bind the specified texture to the active texture as a texture_2D
+
+
+    //Bind vertex texture buffer
+    gl.enableVertexAttribArray( a_vTexCoordLoc );
+    gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
+    gl.vertexAttribPointer(a_vTexCoordLoc, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereVertexIndexBuffer);
+    gl.drawElements(gl.TRIANGLES, sphereVertexIndexData.length, gl.UNSIGNED_SHORT, 0);
+
+
+
+
     gl.enableVertexAttribArray( a_vPositionLoc );
     gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexPositionBuffer);
     gl.vertexAttribPointer(a_vPositionLoc, 3, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereVertexIndexBuffer);
     gl.drawElements(gl.TRIANGLES, sphereVertexIndexData.length, gl.UNSIGNED_SHORT, 0);
     
+
+
+
 
 }
 
@@ -398,26 +446,26 @@ function drawBodies() {
     // Sun
     size = rSun * rSunMult;
     nonCommonMVPMatrix = scalem(size, size, size);
-    drawSphere( vec3( 1.0, 1.0, 0.0 ) );
+    drawSphere( vec3( 1.0, 1.0, 0.0 ), sunTexture );
 
     //Mercury
     size = rMercury * rPlanetMult;
     nonCommonMVPMatrix = mult(rotateY(angleOffset/pMercury),
                               mult(translate(orMercury, 0.0, 0.0), scalem(size, size, size)));
-    drawSphere( vec3(1.0, 0.5, 0.5));
+    drawSphere( vec3(1.0, 0.5, 0.5), mercuryTexture);
 
 
     // Venus
     size = rVenus * rPlanetMult;
     nonCommonMVPMatrix = mult(rotateY(angleOffset/pVenus),
                               mult(translate(orVenus, 0.0, 0.0), scalem(size, size, size)));
-    drawSphere( vec3( 0.5, 1.0, 0.5 ));
+    drawSphere( vec3( 0.5, 1.0, 0.5 ), venusTexture);
 
     // Earth
     size = rEarth * rPlanetMult;
 
     nonCommonMVPMatrix =  mult(EarthRef, scalem(size, size, size));
-    drawSphere( vec3( 0.5, 0.5, 1.0 ));
+    drawSphere( vec3( 0.5, 0.5, 1.0 ), earthTexture);
 
 
     //Moon
@@ -425,7 +473,7 @@ function drawBodies() {
     nonCommonMVPMatrix = mult(EarthRef,
                             mult(rotateY(angleOffset/pMoon),
                             mult(translate(orMoon*50, 0.0, 0.0), scalem(size, size, size))));
-    drawSphere( vec3( 1.0, 1.0, 1.0 ));
+    drawSphere( vec3( 1.0, 1.0, 1.0 ), moonTexture);
 
 
 }
