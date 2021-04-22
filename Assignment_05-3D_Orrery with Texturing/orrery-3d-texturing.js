@@ -46,6 +46,7 @@ var pEarth = 365;
 var pMoon = 27;
 
 var EarthRef;
+var EarthSpin;
 
 // time
 var currentDay;
@@ -120,7 +121,7 @@ window.onload = function init()
     gl.enable(gl.DEPTH_TEST);
 
     currentDay = 0;
-    daysPerFrame = 1.0;
+    daysPerFrame = 0.0625;
 
     // global scaling for the entire orrery
     globalScale = 50.0 / ( orEarth + orMoon + ( rEarth + 2 * rMoon ) * rPlanetMult );
@@ -158,12 +159,6 @@ window.onload = function init()
     tBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordsArray), gl.STATIC_DRAW);
-
-
-    //var a_vTexCoordLoc = gl.getAttribLocation( program, "a_vTexCoord" );
-    // gl.vertexAttribPointer( a_vTexCoordLoc, 2, gl.FLOAT, false, 0, 0 );
-    // gl.enableVertexAttribArray( a_vTexCoordLoc );
-
 
 
 
@@ -339,18 +334,12 @@ function setupSphere() {
             var second = first + longitudeBands + 1;
 
             sphereVertexIndexData.push(first);
-            // textureCoordsArray.push(textureCoordsInit[first]);
             sphereVertexIndexData.push(second);
-            // textureCoordsArray.push(textureCoordsInit[second]);
             sphereVertexIndexData.push(first + 1);
-            // textureCoordsArray.push(textureCoordsInit[first+1]);
 
             sphereVertexIndexData.push(second);
-            // textureCoordsArray.push(textureCoordsInit[second]);
             sphereVertexIndexData.push(second + 1);
-            // textureCoordsArray.push(textureCoordsInit[second+1]);
             sphereVertexIndexData.push(first + 1);
-            // textureCoordsArray.push(textureCoordsInit[first+1]);
 
 
         }
@@ -464,7 +453,7 @@ function drawBodies() {
     // Earth
     size = rEarth * rPlanetMult;
 
-    nonCommonMVPMatrix =  mult(EarthRef, scalem(size, size, size));
+    nonCommonMVPMatrix =  mult(EarthSpin, scalem(size, size, size));
     drawSphere( vec3( 0.5, 0.5, 1.0 ), earthTexture);
 
 
@@ -532,6 +521,10 @@ gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
                            commonMVPMatrix);
 
     var angleOffset = currentDay * 360.0;  // days * degrees
+    var hour = (currentDay - Math.floor(currentDay))*360
+    EarthSpin = mult(rotateY(angleOffset/pEarth),
+                        mult(translate(orEarth, 0.0, 0.0), 
+                        mult(rotateY(hour),rotateZ(23.5))));
 
     EarthRef = mult(rotateY(angleOffset/pEarth),
                         mult(translate(orEarth, 0.0, 0.0), rotateZ(23.5)));
