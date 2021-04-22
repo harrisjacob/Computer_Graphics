@@ -1,7 +1,6 @@
 *.zip
 InClassExercise
-demo-metaball
-demo-pidarts
+demo*
 InClassExercise
 three.js-master
 [0-9]*
