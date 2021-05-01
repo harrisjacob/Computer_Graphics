@@ -1,6 +1,6 @@
 *.zip
 InClassExercise
-demo*
+demo-*
 InClassExercise
 three.js-master
 [0-9]*
